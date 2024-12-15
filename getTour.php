@@ -1,10 +1,10 @@
 <?php
-header('Content-Type: application/json; charset=utf-8'); // вказує браузеру, що відповідь від сервера буде у форматі JSON
-header('Access-Control-Allow-Origin: *'); // Дозволяє доступ з будь-якого джерела
-header('Access-Control-Allow-Methods: GET, POST, OPTIONS'); // Дозволяє методи GET, POST, OPTIONS
-header('Access-Control-Allow-Headers: Content-Type, Authorization'); // Дозволяє зазначені заголовки
+header('Content-Type: application/json; charset=utf-8');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization');
 
-$host = 'localhost';  
+$host = 'localhost';
 $dbname = 'exploreia';
 $username = 'root';
 $password = '';
@@ -21,10 +21,10 @@ try {
 
     $tours = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+    // Додаємо повний шлях до зображення
     foreach ($tours as &$tour) {
         if (isset($tour['image_path'])) {
-            // Формуємо абсолютний шлях до зображення
-            $tour['image_path'] = 'http://' . $_SERVER['SERVER_NAME'] . '/exploreia-backend' . $tour['image_path'];
+            $tour['image_path'] = 'http://' . $_SERVER['HTTP_HOST'] . '/exploreia-backend/' . ltrim($tour['image_path'], '/');
         }
     }
     unset($tour);

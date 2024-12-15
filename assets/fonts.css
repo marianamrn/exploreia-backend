@@ -1,0 +1,11 @@
+@font-face {
+    font-family: 'Ermilov';
+    src: url('@/assets/fonts/Ermilov.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+body {
+    font-family: 'Ermilov', sans-serif;
+}
+  
