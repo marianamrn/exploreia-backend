@@ -13,15 +13,51 @@ try {
     $conn = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    $stmt = $conn->query("SELECT 
-        t.id, t.title, t.destination_location, t.start_date, t.people_limit, i.image_path
-    FROM tours t
-    LEFT JOIN images i ON t.id = i.tour_id 
-    WHERE i.object_type = 'tour' AND i.category = 'banner'");
+    $destination = isset($_GET['destination']) ? $_GET['destination'] : '';
+    $departure = isset($_GET['departure']) ? $_GET['departure'] : '';
+    $date = isset($_GET['date']) ? $_GET['date'] : '';
+    $days = isset($_GET['days']) ? (int)$_GET['days'] : 0;
 
+    $sql = "SELECT 
+            t.id, t.title, t.destination_location, t.departure_location, t.start_date, t.people_limit, i.image_path
+        FROM tours t
+        LEFT JOIN images i ON t.id = i.tour_id 
+        WHERE i.object_type = 'tour' AND i.category = 'banner'";
+
+    // Фільтри до запиту
+    if (!empty($destination)) {
+        $sql .= " AND t.destination_location = :destination";
+    }
+    if (!empty($departure)) {
+        $sql .= " AND LOWER(TRIM(t.departure_location)) = LOWER(TRIM(:departure))";
+    }
+    if (!empty($date)) {
+        $sql .= " AND t.start_date BETWEEN DATE_SUB(:date, INTERVAL 2 DAY) AND DATE_ADD(:date, INTERVAL 2 DAY)";
+    }
+    if ($days > 0) {
+        $sql .= " AND t.duration_days BETWEEN :days - 2 AND :days + 2";
+    }
+
+    $stmt = $conn->prepare($sql);
+
+    // Прив'язуємо параметри
+    if (!empty($destination)) {
+        $stmt->bindParam(':destination', $destination);
+    }
+    if (!empty($departure)) {
+        $stmt->bindParam(':departure', $departure);
+    }
+    if (!empty($date)) {
+        $stmt->bindParam(':date', $date);
+    }
+    if ($days > 0) {
+        $stmt->bindParam(':days', $days, PDO::PARAM_INT);
+    }
+
+    $stmt->execute();
     $tours = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Додаємо повний шлях до зображення
+    // Шлях до зображення
     foreach ($tours as &$tour) {
         if (isset($tour['image_path'])) {
             $tour['image_path'] = 'http://' . $_SERVER['HTTP_HOST'] . '/exploreia-backend/' . ltrim($tour['image_path'], '/');
