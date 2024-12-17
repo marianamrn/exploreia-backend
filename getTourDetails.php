@@ -11,6 +11,7 @@ try {
     $conn = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
+    // Отримання ID туру
     $id = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
     // Отримання інформації про тур
@@ -30,7 +31,7 @@ try {
         $image['image_path'] = 'http://' . $_SERVER['HTTP_HOST'] . '/exploreia-backend/' . ltrim($image['image_path'], '/');
     }
 
-    // Отримання обкладинки категорії (category_banner)
+    // Отримання обкладинки
     $bannerQuery = $conn->prepare("SELECT image_path FROM images WHERE tour_id = :id AND category = 'banner' LIMIT 1");
     $bannerQuery->bindParam(':id', $id, PDO::PARAM_INT);
     $bannerQuery->execute();
@@ -38,14 +39,16 @@ try {
 
     $bannerImage = $banner ? 'http://' . $_SERVER['HTTP_HOST'] . '/exploreia-backend/' . ltrim($banner['image_path'], '/') : null;
 
-    // Повертаємо тур, зображення і банер, а також додаткові поля
     echo json_encode([
         'tour' => $tour,
         'images' => $images,
         'banner' => $bannerImage,
-        'where_to' => $tour['where_to'],  // додаємо ці поля
+        'where_to' => $tour['where_to'],
         'for_whom' => $tour['for_whom'],
-        'why_go' => $tour['why_go']
+        'why_go' => $tour['why_go'],
+        'description' => $tour['description'],
+        'includes' => $tour['includes'],
+        'facts' => $tour['facts']
     ]);
 } catch (PDOException $e) {
     echo json_encode(['error' => $e->getMessage()]);
