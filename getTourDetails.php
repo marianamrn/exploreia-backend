@@ -19,7 +19,7 @@ try {
     $tourQuery->execute();
     $tour = $tourQuery->fetch(PDO::FETCH_ASSOC);
 
-    // Отримання фотографій
+    // Отримання фотографій для туру
     $imagesQuery = $conn->prepare("SELECT image_path, alt_text FROM images WHERE tour_id = :id AND object_type = 'tour'");
     $imagesQuery->bindParam(':id', $id, PDO::PARAM_INT);
     $imagesQuery->execute();
@@ -38,7 +38,15 @@ try {
 
     $bannerImage = $banner ? 'http://' . $_SERVER['HTTP_HOST'] . '/exploreia-backend/' . ltrim($banner['image_path'], '/') : null;
 
-    echo json_encode(['tour' => $tour, 'images' => $images, 'banner' => $bannerImage]);
+    // Повертаємо тур, зображення і банер, а також додаткові поля
+    echo json_encode([
+        'tour' => $tour,
+        'images' => $images,
+        'banner' => $bannerImage,
+        'where_to' => $tour['where_to'],  // додаємо ці поля
+        'for_whom' => $tour['for_whom'],
+        'why_go' => $tour['why_go']
+    ]);
 } catch (PDOException $e) {
     echo json_encode(['error' => $e->getMessage()]);
 }
