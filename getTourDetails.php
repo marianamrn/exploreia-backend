@@ -20,7 +20,7 @@ try {
     $tourQuery->execute();
     $tour = $tourQuery->fetch(PDO::FETCH_ASSOC);
 
-    // Отримання фотографій для туру
+    // Фотографії для туру
     $imagesQuery = $conn->prepare("SELECT image_path, alt_text FROM images WHERE tour_id = :id AND object_type = 'tour'");
     $imagesQuery->bindParam(':id', $id, PDO::PARAM_INT);
     $imagesQuery->execute();
@@ -31,7 +31,7 @@ try {
         $image['image_path'] = 'http://' . $_SERVER['HTTP_HOST'] . '/exploreia-backend/' . ltrim($image['image_path'], '/');
     }
 
-    // Отримання обкладинки
+    // обкладинка
     $bannerQuery = $conn->prepare("SELECT image_path FROM images WHERE tour_id = :id AND category = 'banner' LIMIT 1");
     $bannerQuery->bindParam(':id', $id, PDO::PARAM_INT);
     $bannerQuery->execute();
@@ -39,10 +39,22 @@ try {
 
     $bannerImage = $banner ? 'http://' . $_SERVER['HTTP_HOST'] . '/exploreia-backend/' . ltrim($banner['image_path'], '/') : null;
 
+    // зображення "welcome-tour-photo"
+    $welcomeQuery = $conn->prepare("SELECT image_path, alt_text FROM images WHERE tour_id = :id AND category = 'welcome-tour-photo' LIMIT 1");
+    $welcomeQuery->bindParam(':id', $id, PDO::PARAM_INT);
+    $welcomeQuery->execute();
+    $welcomeImage = $welcomeQuery->fetch(PDO::FETCH_ASSOC);
+
+    $welcomeTourPhoto = $welcomeImage ? [
+        'image_path' => 'http://' . $_SERVER['HTTP_HOST'] . '/exploreia-backend/' . ltrim($welcomeImage['image_path'], '/'),
+        'alt_text' => $welcomeImage['alt_text']
+    ] : null;
+
     echo json_encode([
         'tour' => $tour,
         'images' => $images,
         'banner' => $bannerImage,
+        'welcomeTourPhoto' => $welcomeTourPhoto,
         'where_to' => $tour['where_to'],
         'for_whom' => $tour['for_whom'],
         'why_go' => $tour['why_go'],
