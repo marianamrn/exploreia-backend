@@ -17,6 +17,7 @@ try {
     $departure = isset($_GET['departure']) ? $_GET['departure'] : '';
     $date = isset($_GET['date']) ? $_GET['date'] : '';
     $days = isset($_GET['days']) ? (int)$_GET['days'] : 0;
+    $tourId = isset($_GET['tourId']) ? (int)$_GET['tourId'] : 0;
 
     $sql = "SELECT 
             t.id, t.title, t.destination_location, t.departure_location, t.start_date, t.people_limit, i.image_path
@@ -37,6 +38,9 @@ try {
     if ($days > 0) {
         $sql .= " AND t.duration_days BETWEEN :days - 2 AND :days + 2";
     }
+    if ($tourId > 0) {
+        $sql .= " AND t.id != :tourId";  // Виключення поточного туру
+    }
 
     $stmt = $conn->prepare($sql);
 
@@ -52,6 +56,9 @@ try {
     }
     if ($days > 0) {
         $stmt->bindParam(':days', $days, PDO::PARAM_INT);
+    }
+    if ($tourId > 0) {
+        $stmt->bindParam(':tourId', $tourId, PDO::PARAM_INT);
     }
 
     $stmt->execute();
