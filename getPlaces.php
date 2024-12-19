@@ -13,30 +13,58 @@ try {
     $conn = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // Отримання обкладинки сторінки Places
+    // Отримання параметрів фільтрації з GET-запиту
+    $region = isset($_GET['region']) ? $_GET['region'] : '';
+    $category = isset($_GET['category']) ? $_GET['category'] : '';
+    $seasonality = isset($_GET['seasonality']) ? $_GET['seasonality'] : '';
+
+    // Обкладинка сторінки Places
     $bannerQuery = $conn->prepare("SELECT image_path FROM images WHERE object_type = 'location' AND category = 'places-page-banner' LIMIT 1");
     $bannerQuery->execute();
     $banner = $bannerQuery->fetch(PDO::FETCH_ASSOC);
 
     if (!$banner) {
-        // Лог для перевірки: якщо банер не знайдено
         echo json_encode(['error' => 'No banner found']);
         exit;
     }
 
     $bannerImage = 'http://' . $_SERVER['HTTP_HOST'] . '/exploreia-backend/' . ltrim($banner['image_path'], '/');
 
-    // Запит для отримання місцин
-    $placesQuery = $conn->prepare("SELECT 
+    // Запит для отримання місцин з фільтрами
+    $placesQueryStr = "SELECT 
             l.id, l.location_name, l.category, i.image_path, l.name
         FROM places l
         LEFT JOIN images i ON l.id = i.place_id
-        WHERE i.object_type = 'location' AND i.category = 'banner'");
+        WHERE i.object_type = 'location' AND i.category = 'banner'";
+
+    // Додавання фільтрів до запиту
+    if ($region) {
+        $placesQueryStr .= " AND l.region = :region";
+    }
+    if ($category) {
+        $placesQueryStr .= " AND l.category = :category";
+    }
+    if ($seasonality) {
+        $placesQueryStr .= " AND l.seasonality = :seasonality";
+    }
+
+    $placesQuery = $conn->prepare($placesQueryStr);
+
+    // Прив'язка параметрів
+    if ($region) {
+        $placesQuery->bindParam(':region', $region);
+    }
+    if ($category) {
+        $placesQuery->bindParam(':category', $category);
+    }
+    if ($seasonality) {
+        $placesQuery->bindParam(':seasonality', $seasonality);
+    }
+
     $placesQuery->execute();
     $places = $placesQuery->fetchAll(PDO::FETCH_ASSOC);
 
     if (empty($places)) {
-        // Лог для перевірки: якщо місцини не знайдено
         echo json_encode(['error' => 'No places found']);
         exit;
     }
@@ -55,7 +83,6 @@ try {
         'places' => $places
     ]);
 } catch (PDOException $e) {
-    // Лог для помилки підключення або виконання запиту
     echo json_encode(['error' => 'Database error: ' . $e->getMessage()]);
 }
 ?>
